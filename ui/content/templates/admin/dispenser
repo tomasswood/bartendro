@@ -1,5 +1,6 @@
 {% extends 'admin/layout' %}
 {% block body %}
+{% if current_user.is_administrator() %}
 <div class="row-fluid">
     <div class="span6">
     {% with messages = get_flashed_messages() %}
@@ -161,4 +162,5 @@ function clean()
     }
 }
 </script>
+{% endif %}
 {% endblock %}

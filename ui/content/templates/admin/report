@@ -1,5 +1,6 @@
 {% extends 'admin/layout' %}
 {% block body %}
+{% if current_user.is_administrator() %}
 <div class="container-fluid">
     <div class="row-fluid">	
         <div class="span12">	
@@ -53,4 +54,5 @@ jQuery(function($)
     $("#enddate").datepicker( { dateFormat : "yy-mm-dd" } );
 });
 </script>
+{% endif %}
 {% endblock %}

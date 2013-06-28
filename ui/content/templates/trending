@@ -1,4 +1,4 @@
-{% extends 'layout' %}
+{% extends 'index_layout' %}
 {% block body %}
 <div id="scroll-pane">
     {% if top_drinks %}

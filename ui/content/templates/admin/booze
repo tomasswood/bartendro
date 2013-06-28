@@ -1,5 +1,6 @@
 {% extends 'admin/layout' %}
 {% block body %}
+{% if current_user.is_administrator() %}
 <div class="row-fluid">
     <div class="span6">
        <h2>{{ title }}</h2>
@@ -35,6 +36,10 @@
              {% if form.type.errors %}
                  <ul class="errors">{% for error in form.type.errors %}<li>{{ error }}</li>{% endfor %}</ul>
              {% endif %}
+             <div>{{ form.price.label }}/10ml:<br/> {{ form.price(class="form-element") }}</div>
+             {% if form.price.errors %}
+                 <ul class="errors">{% for error in form.price.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+             {% endif %}
              {{ form.id() }}
              <div style="padding-top: 10px;">
                  {{ form.cancel(class="btn btn-large") }}
@@ -60,4 +65,5 @@
         </table>
    </div>
 </div>
+{% endif %}
 {% endblock %}

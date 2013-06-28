@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{ title }}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/vnd.microsoft.icon" href="/static/images/icon.ico">
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/static/bartendro.css">
+  </head>
+  <body>
+  <div class="navbar navbar-inverse">
+    <div class="navbar-inner">
+        <a class="brand" href="#">top</a>
+        <ul class="nav">
+            <li><a href="/">home</a></li>
+            <li><a href="/trending">popular</a></li>
+            {% if current_user.is_administrator() %}
+                <li><a href="/admin">admin</a></li>
+            {% endif %}
+        </ul>
+        <ul class="nav nav-right">
+            <li><a>{{ user.username }}</a></li>
+            <li><a>Credit: {{ user.credit }}</a></li>
+            <li><a href="/admin/logout">logout</a></li>
+        </ul>
+    </div>
+</div>
+      <div class="container-fluid fill">
+        <div id="moar">
+            <div id="content">
+                <div class="orange-border">
+                    <div class="dark-border">
+                       {% block body %}{% endblock %}
+                    </div>
+                </div>
+             </div>
+          </div>
+      </div>
+  </body>
+</html>

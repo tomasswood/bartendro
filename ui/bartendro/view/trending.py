@@ -7,14 +7,17 @@ from bartendro.model.drink import Drink
 from bartendro.model.booze import Booze
 from bartendro.model.booze_group import BoozeGroup
 from bartendro.form.booze import BoozeForm
+from bartendro.view import root_menu
 
 TREND_WINDOW = 12 # in hours
 
 @app.route('/trending')
+@login_required
 def trending_drinks():
     return trending_drinks_detail(TREND_WINDOW)
 
 @app.route('/trending/<int:hours>')
+@login_required
 def trending_drinks_detail(hours):
     enddate = int(time.time())
     begindate = enddate - (hours * 60 * 60)
@@ -43,9 +46,9 @@ def trending_drinks_detail(hours):
                                   GROUP BY drink_name.name 
                                   ORDER BY count(drink_log.drink_id) desc;""")\
                  .params(begin=begindate, end=enddate).all()
-
+    user = root_menu.index_layout()
     return render_template("trending", top_drinks = top_drinks, 
                                        title="Trending drinks in the last %s hours" % hours,
                                        total_number=total_number[0],
                                        total_volume=total_volume[0],
-                                       hours=hours)
+                                       hours=hours, user=user)

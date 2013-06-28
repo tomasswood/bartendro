@@ -1,5 +1,6 @@
 {% extends 'admin/layout' %}
 {% block body %}
+{% if current_user.is_administrator() %}
 <div class="row-fluid">
     <div class="span6">
         <h2>{{ title }}</h2>
@@ -108,4 +109,5 @@ function available(state)
     $.ajax({ url: "/ws/drink/0/available/" + state });
 }
 </script>
+{% endif %}
 {% endblock %}

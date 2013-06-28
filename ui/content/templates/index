@@ -1,4 +1,4 @@
-{% extends 'layout' %}
+{% extends 'index_layout' %}
 {% block body %}
 <div id="scroll-pane">
     {% if top_drinks or other_drinks %}
@@ -19,9 +19,6 @@
             Bartendro can make no drinks at this time. We're sorry!
         </div>
     {% endif %}
-</div>
-<div>
-<a href="/admin" style="color: #Fafafa">admin</a>
 </div>
 <script type="text/javascript" src="/static/js/jquery.js"></script>
 <script type="text/javascript">

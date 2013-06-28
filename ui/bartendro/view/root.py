@@ -2,14 +2,18 @@
 import memcache
 from bartendro import app, db
 from flask import Flask, request, render_template
+from flask.ext.login import login_required
 from bartendro.model.dispenser import Dispenser
 from bartendro.model.drink import Drink
 from bartendro.model.drink_name import DrinkName
+from bartendro.view import root_menu
 
+@login_required
 def process_ingredients(drinks):
     for drink in drinks:
         drink.process_ingredients()
 
+@login_required
 def filter_drink_list(can_make_dict, drinks):
     filtered = []
     for drink in drinks:
@@ -21,6 +25,7 @@ def filter_drink_list(can_make_dict, drinks):
     return filtered
 
 @app.route('/')
+@login_required
 def index():
     if app.mixer.disp_count == 1:
         disp = db.session.query(Dispenser) \
@@ -50,8 +55,8 @@ def index():
                         .order_by(DrinkName.name).all() 
     other_drinks = filter_drink_list(can_make_dict, other_drinks)
     process_ingredients(other_drinks)
-            
+    user = root_menu.index_layout()
     return render_template("index", 
                            top_drinks=top_drinks, 
                            other_drinks=other_drinks,
-                           title="Bartendro")
+                           title="Bartendro", user=user)

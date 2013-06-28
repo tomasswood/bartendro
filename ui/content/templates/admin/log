@@ -1,5 +1,6 @@
 {% extends 'admin/layout' %}
 {% block body %}
+{% if current_user.is_administrator() %}
 <div class="section">
     {{ title }}
     <button type="button" class="small_button" onclick="reload()">reload</button>
@@ -15,4 +16,5 @@ function reload()
     window.location.reload();
 }
 </script>
+{% endif %}
 {% endblock %}

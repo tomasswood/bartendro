@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bartendro import app, db
 from flask import Flask, request, render_template
+from flask.ext.login import login_required
 from bartendro.model.drink import Drink
 from bartendro.model.drink_booze import DrinkBooze
 from bartendro.model.custom_drink import CustomDrink
@@ -11,9 +12,12 @@ from bartendro.model.booze_group_booze import BoozeGroupBooze
 from bartendro.model.drink_name import DrinkName
 from bartendro.model.dispenser import Dispenser
 from bartendro import constant 
+from bartendro.view import root_menu
 
 @app.route('/drink/<id>')
+@login_required
 def drink(id):
+    user = root_menu.index_layout()
     drink = db.session.query(Drink) \
                           .filter(Drink.id == id) \
                           .first() 
@@ -50,7 +54,7 @@ def drink(id):
                                title=drink.name.name,
                                is_custom=0,
                                show_sweet_tart=show_sweet_tart,
-                               show_sobriety=show_sobriety)
+                               show_sobriety=show_sobriety,user=user)
 
     dispensers = db.session.query(Dispenser).all()
     disp_boozes = {}
@@ -83,8 +87,10 @@ def drink(id):
                            custom_drink=drink.custom_drink[0],
                            booze_group=booze_group,
                            show_sweet_tart=show_sweet_tart,
-                           show_sobriety=show_sobriety)
+                           show_sobriety=show_sobriety,user=user)
 
 @app.route('/drink/sobriety')
+@login_required
 def drink_sobriety():
-    return render_template("drink/sobriety")
+    user = root_menu.index_layout()
+    return render_template("drink/sobriety",user=user)

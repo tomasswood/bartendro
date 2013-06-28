@@ -42,7 +42,8 @@ class Drink(db.Model):
             ing.append({ 'name' : db.booze.name, 
                          'id' : db.booze.id, 
                          'parts' : db.value, 
-                         'type' : db.booze.type 
+                         'type' : db.booze.type, 
+                         'price' : db.booze.price 
                        })
         self.ingredients = ing
 

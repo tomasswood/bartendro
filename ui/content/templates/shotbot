@@ -1,4 +1,4 @@
-{% extends 'layout' %}
+{% extends 'index_layout' %}
 {% block body %}
 <div style="text-align: center; padding-bottom: 10px;">
 <h1>ShotBot is dispensing: {{ booze }}</h1>

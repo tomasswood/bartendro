@@ -1,5 +1,6 @@
 {% extends 'admin/layout' %}
 {% block body %}
+{% if current_user.is_administrator() %}
 <div class="main">
     <div class="forms" style="float: right; margin-right: 10px">
         <form method="POST" action="/admin/liquidout/test">
@@ -19,4 +20,5 @@
         </form>
     </div>
 </div>
+{% endif %}
 {% endblock %}

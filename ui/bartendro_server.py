@@ -33,9 +33,9 @@ if len(sys.argv) > 1 and sys.argv[1] == "--debug":
     debug = True
 else:
     debug = False
-
+debug = True
 try: 
-    app.software_only = int(os.environ['BARTENDRO_SOFTWARE_ONLY'])
+    app.software_only = 1 #int(os.environ['BARTENDRO_SOFTWARE_ONLY'])
     app.num_dispensers = 15
 except KeyError:
     app.software_only = 0
@@ -76,4 +76,4 @@ if app.software_only:
 app.log.info("Bartendro starting")
 
 app.debug = debug
-app.run(host='0.0.0.0', port=8080)
+app.run(host='127.0.0.1', port=8091)

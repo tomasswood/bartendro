@@ -1,0 +1,51 @@
+{% extends 'admin/layout' %}
+{% block body %}
+{% if current_user.is_administrator() %}
+<div class="row-fluid">
+    <div class="span6">
+       <h2>{{ title }}</h2>
+       {% if saved %}
+          <div class="alert"> Your changes have been saved.  </div>
+       {% endif %}
+       <div class="forms">
+          <form method="POST" action="/admin/users/save">
+             <div>{{ form.username.label }}:<br/> {{ form.username(class="form-element") }}</div>
+             {% if form.username.errors %}
+                 <ul class="errors">{% for error in form.username.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+             {% endif %}
+             <div>{{ form.password.label }}:<br/> {{ form.password(class="form-element") }}</div>
+             {% if form.password.errors %}
+                 <ul class="errors">{% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+             {% endif %}
+             <div>{{ form.credit.label }}:<br/> {{ form.credit(class="form-element") }}</div>
+             {% if form.credit.errors %}
+                 <ul class="errors">{% for error in form.credit.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+             {% endif %}
+             <div>{{ form.administrator.label }}:<br/> {{ form.administrator(class="form-element") }}</div>
+             {% if form.administrator.errors %}
+                 <ul class="errors">{% for error in form.administrator.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+             {% endif %}
+             {{ form.id() }}
+             <div style="padding-top: 10px;">
+                 {{ form.cancel(class="btn btn-large") }}
+                 {{ form.save(class="btn btn-large btn-primary") }}
+             </div>
+          </form>
+       </div>
+    </div>
+
+    <div class="span6">
+       <div style="float: right; padding-top: 10px">
+          <a href="/admin/users" class="btn btn-large">Add new User</a>
+       </div>
+       <h2>User List</h2>
+       <table class="table table-striped table-bordered">
+          {% for users in users %}
+            <tr><td><a href="/admin/users/edit/{{users.id}}">{{ users.username }}</a>
+            </li>
+          {% endfor %}
+        </table>
+   </div>
+</div>
+{% endif %}
+{% endblock %}

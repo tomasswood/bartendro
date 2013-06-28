@@ -1,4 +1,4 @@
-{% extends 'admin/layout' %}
+{% extends 'admin/layout_nouser' %}
 {% block body %}
     <div class="row-fluid">
         <div class="span3"></div>

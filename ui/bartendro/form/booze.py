@@ -12,6 +12,7 @@ class BoozeForm(Form):
     type = SelectField(u"Type", [validators.NumberRange(0, len(booze.booze_types))], 
                                 choices=booze.booze_types,
                                 coerce=int)
+    price = DecimalField(u"Price", [validators.NumberRange(0, 1000)], default=0, places=0)
     save = SubmitField(u"save")
     cancel = SubmitField(u"cancel")
 

@@ -340,7 +340,7 @@ function make_drink(drink, is_taster)
 			lb += "</div>";
 			$.modal(lb, { 'escClose' : false });
 			$.ajax({
-					url: "/ws/drink/" + drink + args,
+					url: "/ws/drink/" + drink + {{ user.id }} + drink_price + args,
 					success: function(html)
 					{
 						if (is_taster)
@@ -349,6 +349,7 @@ function make_drink(drink, is_taster)
 							window.location = "/";
 					}
 			});
+
 		} 
 		else 
 		{	

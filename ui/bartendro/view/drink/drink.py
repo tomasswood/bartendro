@@ -87,7 +87,7 @@ def drink(id):
                            custom_drink=drink.custom_drink[0],
                            booze_group=booze_group,
                            show_sweet_tart=show_sweet_tart,
-                           show_sobriety=show_sobriety,user=user)
+                           show_sobriety=show_sobriety,user=user,userCredits=userCredits)
 
 @app.route('/drink/sobriety')
 @login_required

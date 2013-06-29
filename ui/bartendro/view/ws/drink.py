@@ -6,11 +6,13 @@ from flask.ext.login import login_required, current_user
 from werkzeug.exceptions import ServiceUnavailable
 from bartendro.model.drink import Drink
 from bartendro.model.booze import Booze
+from bartendro.model.users import Users
 from bartendro.form.booze import BoozeForm
 from bartendro import constant
 
-@app.route('/ws/drink/<int:drink>')
-def ws_drink(drink):
+@app.route('/ws/drink/<int:drink><int:user><int:drink_price>')
+def ws_drink(drink,user,drink_price):
+    admin_users_creditupdate(user,drink_price)
     mixer = app.mixer
 
     if app.options.must_login_to_dispense and not current_user.is_authenticated():
@@ -19,11 +21,18 @@ def ws_drink(drink):
     recipe = {}
     for arg in request.args:
         recipe[arg] = int(request.args.get(arg))
-
+        admin_users_creditupdate()
     if mixer.make_drink(drink, recipe):
         return "ok\n"
     else:
         raise ServiceUnavailable("Error: %s (%d)" % (mixer.get_error(), ret))
+
+def admin_users_creditupdate(id,drink_price):
+    id = 1
+    drink_price = 555
+    user = Users.query.filter_by(id=int(id)).first()
+    user.credit = drink_price
+    db.session.commit()
 
 @app.route('/ws/drink/<int:drink>/available/<int:state>')
 def ws_drink_available(drink, state):

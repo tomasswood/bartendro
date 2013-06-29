@@ -46,8 +46,13 @@ def trending_drinks_detail(hours):
                                   GROUP BY drink_name.name 
                                   ORDER BY count(drink_log.drink_id) desc;""")\
                  .params(begin=begindate, end=enddate).all()
+<<<<<<< HEAD
     user = root_menu.index_layout()
     return render_template("trending", top_drinks = top_drinks, 
+=======
+
+    return render_template("trending", top_drinks = top_drinks, options=app.options,
+>>>>>>> partyrobotics/master
                                        title="Trending drinks in the last %s hours" % hours,
                                        total_number=total_number[0],
                                        total_volume=total_volume[0],

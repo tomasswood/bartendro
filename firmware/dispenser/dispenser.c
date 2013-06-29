@@ -22,12 +22,10 @@
 #define ee_liquid_low_threshold_offset   5
 #define ee_liquid_out_threshold_offset   7 
 
-// TODO: fix up pump id script to not truncate this value
-
 #define RESET_DURATION                   1
 #define SYNC_COUNT                      10 // Every SYNC_INIT ms we will change the color animation
 #define NUM_ADC_SAMPLES                  5
-#define MAX_CURRENT_SENSE_CYCLES         3
+#define MAX_CURRENT_SENSE_CYCLES        10
 #define TICKS_SAVE_THRESHOLD          1000
 #define DEFAULT_LIQUID_LOW_THRESHOLD   140
 #define DEFAULT_LIQUID_OUT_THRESHOLD    90
@@ -41,6 +39,7 @@ static volatile uint32_t g_reset = 0;
 static volatile uint32_t g_ticks = 0;
 static volatile uint32_t g_dispense_target_ticks = 0;
 static volatile uint8_t g_is_dispensing = 0;
+static volatile uint8_t g_is_motor_on = 0;
 
 static volatile uint8_t g_hall0 = 0;
 static volatile uint8_t g_hall1 = 0;
@@ -48,20 +47,20 @@ static volatile uint8_t g_hall2 = 0;
 static volatile uint8_t g_hall3 = 0;
 static volatile uint8_t g_sync = 0;
 static volatile uint32_t g_sync_count = 0, g_pattern_t = 0;
-static volatile uint8_t g_sync_divisor = 0;
-static void (*g_led_function)(uint32_t, color_t *) = 0;
+static volatile uint8_t g_sync_divisor = 10;
 
 static uint8_t  g_current_sense_num_cycles = 0;
 static uint16_t g_current_sense_threshold = 465;
 static volatile uint8_t g_current_sense_detected = 0;
 
 void check_dispense_complete_isr(void);
-void set_motor_speed(uint8_t speed);
+void set_motor_speed(uint8_t speed, uint8_t use_current_sense);
+void stop_motor(void);
 void adc_shutdown(void);
 uint8_t check_reset(void);
-void set_led_pattern(void (*func)(uint32_t, color_t *), uint8_t sync_divisor);
 void is_dispensing(void);
 void flush_saved_tick_count(uint8_t force);
+void set_led_pattern(uint8_t pattern);
 
 /*
    0  - PD0 - RX
@@ -200,15 +199,15 @@ ISR(ADC_vect)
 
     if (g_current_sense_num_cycles >= MAX_CURRENT_SENSE_CYCLES)
     {
-        set_motor_speed(0);
+        stop_motor();
         g_is_dispensing = 0;
         g_dispense_target_ticks = 0;
-        set_led_pattern(led_pattern_current_sense, 20);
+        set_led_pattern(LED_PATTERN_CURRENT_SENSE);
         g_current_sense_detected = 1;
     }
 
     // If we're still dispensing, then start another ADC conversion
-    if (g_is_dispensing)
+    if (g_is_dispensing || g_is_motor_on)
         ADCSRA |= (1<<ADSC);
 }
 
@@ -219,7 +218,7 @@ void check_dispense_complete_isr(void)
     {
          g_dispense_target_ticks = 0;
          g_is_dispensing = 0;
-         set_motor_speed(0);
+         stop_motor();
          adc_shutdown();
     }
 }
@@ -249,14 +248,14 @@ void idle(void)
     }
     sei();
 
-    if (animate && g_led_function)
+    if (animate)
     {
         cli();
         t = g_pattern_t++;
         sei();
         // do some animation!
-        (*g_led_function)(t, &c);
-        set_led_rgb_no_delay(c.red, c.green, c.blue);
+        led_pattern_next(t, &c);
+        set_led_rgb(c.red, c.green, c.blue);
     }
 
     flush_saved_tick_count(0);
@@ -337,16 +336,23 @@ void set_liquid_thresholds(uint16_t low, uint16_t out)
     eeprom_update_word((uint16_t *)ee_liquid_out_threshold_offset, out);
 }
 
-void set_led_pattern(void (*func)(uint32_t, color_t *), uint8_t sync_divisor)
+void set_led_pattern(uint8_t pattern)
 {
-    if (func == NULL)
-        set_led_rgb(0, 0, 0);
-
+    led_pattern_init(pattern);
     cli();
     g_pattern_t = 0;
-    g_sync_divisor = sync_divisor;
     sei();
-    g_led_function = func;
+}
+
+void adc_current_sense_start(void)
+{
+    // Set up ADC conversion with interrupt enable
+    ADCSRA = (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2) | (1 << ADIE);
+    ADMUX = (1<<REFS0) | (0 << REFS1);
+    ADCSRA |= (1<<ADEN);
+
+    // Start a conversion
+    ADCSRA |= (1<<ADSC);
 }
 
 void adc_liquid_level_setup(void)
@@ -390,22 +396,41 @@ void get_liquid_level(void)
     send_packet16(PACKET_LIQUID_LEVEL, g_liquid_level, 0);
 }
 
-void set_motor_speed(uint8_t speed)
+void set_motor_speed(uint8_t speed, uint8_t use_current_sense)
 {
+    if (use_current_sense)
+        adc_current_sense_start();
+
     OCR0B = 255 - speed;
+
+    cli();
+    g_is_motor_on = speed != 0;
+    sei();
+}
+
+void stop_motor(void)
+{
+    adc_shutdown();
+    OCR0B = 255;
+    cli();
+    g_is_motor_on = 0;
+    sei();
 }
 
 void run_motor_timed(uint32_t duration)
 {
     uint32_t t;
 
-    set_motor_speed(255);
+    if (duration == 0)
+        return;
+
+    set_motor_speed(255, 1);
     for(t = 0; t < duration && !check_reset(); t++)
         _delay_ms(1);
-    set_motor_speed(0);
+    stop_motor();
 }
 
-void dispense_ticks(uint32_t ticks)
+void dispense_ticks(uint32_t ticks, uint16_t speed)
 {
     uint8_t dispensing;
 
@@ -413,7 +438,7 @@ void dispense_ticks(uint32_t ticks)
     dispensing = g_is_dispensing;
     sei();
 
-    if (dispensing)
+    if (dispensing || ticks == 0)
         return;
 
     cli();
@@ -421,15 +446,7 @@ void dispense_ticks(uint32_t ticks)
     g_is_dispensing = 1;
     sei();
 
-    // Set up ADC conversion with interrupt enable
-    ADCSRA = (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2) | (1 << ADIE);
-    ADMUX = (1<<REFS0) | (0 << REFS1);
-    ADCSRA |= (1<<ADEN);
-
-    // Start a conversion
-    ADCSRA |= (1<<ADSC);
-
-    set_motor_speed(255);
+    set_motor_speed(speed, 1);
 }
 
 void is_dispensing(void)
@@ -440,7 +457,7 @@ void is_dispensing(void)
     dispensing = g_is_dispensing;
     sei();
 
-    send_packet8(PACKET_IS_DISPENSING, dispensing);
+    send_packet8_2(PACKET_IS_DISPENSING, dispensing, g_current_sense_detected);
 }
 
 uint8_t address_exchange(void)
@@ -501,11 +518,12 @@ void id_conflict(void)
 
 int main(void)
 {
-    uint8_t id, rec, i, cs;
+    uint8_t  id, rec, i, cs;
+    color_t  c;
     packet_t p;
 
     setup();
-    set_motor_speed(0);
+    stop_motor();
     sei();
     for(i = 0; i < 5; i++)
     {
@@ -526,7 +544,7 @@ int main(void)
         g_current_sense_num_cycles = 0;
         setup();
         serial_init();
-        set_motor_speed(0);
+        stop_motor();
         set_led_rgb(0, 0, 255);
 
         sei();
@@ -555,7 +573,7 @@ int main(void)
 
                     case PACKET_SET_MOTOR_SPEED:
                         if (!cs)
-                            set_motor_speed(p.p.uint8[0]);
+                            set_motor_speed(p.p.uint8[0], p.p.uint8[1]);
 
                         if (p.p.uint8[0] == 0)
                             flush_saved_tick_count(0);
@@ -564,7 +582,7 @@ int main(void)
                     case PACKET_TICK_DISPENSE:
                         if (!cs)
                         {
-                            dispense_ticks(p.p.uint32);
+                            dispense_ticks((uint16_t)p.p.uint32, 255);
                             flush_saved_tick_count(0);
                         }
                         break;
@@ -590,28 +608,27 @@ int main(void)
                         break;
 
                     case PACKET_LED_OFF:
-
-                        set_led_pattern(NULL, 255);
+                        set_led_pattern(LED_PATTERN_OFF);
                         break;
 
                     case PACKET_LED_IDLE:
                         if (!cs)
-                            set_led_pattern(led_pattern_hue, 20);
+                            set_led_pattern(LED_PATTERN_IDLE);
                         break;
 
                     case PACKET_LED_DISPENSE:
                         if (!cs)
-                            set_led_pattern(led_pattern_dispense, 5);
+                            set_led_pattern(LED_PATTERN_DISPENSE);
                         break;
 
                     case PACKET_LED_DRINK_DONE:
                         if (!cs)
-                            set_led_pattern(led_pattern_drink_done, 10);
+                            set_led_pattern(LED_PATTERN_DRINK_DONE);
                         break;
 
                     case PACKET_LED_CLEAN:
                         if (!cs)
-                            set_led_pattern(led_pattern_clean, 10);
+                            set_led_pattern(LED_PATTERN_CLEAN);
                         break;
 
                     case PACKET_COMM_TEST:
@@ -644,6 +661,28 @@ int main(void)
 
                     case PACKET_SET_LIQUID_THRESHOLDS:
                         set_liquid_thresholds(p.p.uint16[0], p.p.uint16[1]);
+                        break;
+
+                    case PACKET_TICK_SPEED_DISPENSE:
+                        if (!cs)
+                        {
+                            dispense_ticks(p.p.uint16[0], (uint8_t)p.p.uint16[1]);
+                            flush_saved_tick_count(0);
+                        }
+                        break;
+                    case PACKET_PATTERN_DEFINE:
+                        pattern_define(p.p.uint8[0]);
+                        break;
+
+                    case PACKET_PATTERN_ADD_SEGMENT:
+                        c.red = p.p.uint8[0];
+                        c.green = p.p.uint8[1];
+                        c.blue = p.p.uint8[2];
+                        pattern_add_segment(&c, p.p.uint8[3]);
+                        break;
+
+                    case PACKET_PATTERN_FINISH:
+                        pattern_finish();
                         break;
                 }
             }

@@ -48,6 +48,10 @@ PACKET_RESET_SAVED_TICK_COUNT = 18
 PACKET_GET_LIQUID_THRESHOLDS  = 19
 PACKET_SET_LIQUID_THRESHOLDS  = 20
 PACKET_FLUSH_SAVED_TICK_COUNT = 21
+PACKET_TICK_SPEED_DISPENSE    = 22
+PACKET_PATTERN_DEFINE         = 23
+PACKET_PATTERN_ADD_SEGMENT    = 24
+PACKET_PATTERN_FINISH         = 25
 PACKET_COMM_TEST              = 0xFE
 
 DEST_BROADCAST         = 0xFF
@@ -258,14 +262,14 @@ class RouterDriver(object):
         print "  * Invalid ACK code %d" % ord(ch)
         return False
 
-    def send_packet8(self, dest, type, val):
+    def send_packet8(self, dest, type, val0, val1=0, val2=0, val3=0):
         if dest != DEST_BROADCAST: 
             dispenser_id = self.dispenser_ids[dest]
             if dispenser_id == 255: return False
         else:
             dispenser_id = dest
 
-        return self.send_packet(dest, pack("BBBBBB", dispenser_id, type, val, 0, 0, 0))
+        return self.send_packet(dest, pack("BBBBBB", dispenser_id, type, val0, val1, val2, val3))
 
     def send_packet16(self, dest, type, val0, val1):
         if dest != DEST_BROADCAST: 
@@ -343,6 +347,14 @@ class RouterDriver(object):
         else:
             return (ack, 0)
 
+    def receive_packet8_2(self):
+        ack, packet = self.receive_packet()
+        if ack == PACKET_ACK_OK:
+            data = unpack("BBBBBB", packet)
+            return (ack, data[2], data[3])
+        else:
+            return (ack, 0)
+
     def receive_packet16(self):
         ack, packet = self.receive_packet()
         if ack == PACKET_ACK_OK:
@@ -362,7 +374,7 @@ class RouterDriver(object):
 
     def start(self, dispenser):
         if self.software_only: return True
-        return self.send_packet8(dispenser, PACKET_SET_MOTOR_SPEED, 255)
+        return self.send_packet8(dispenser, PACKET_SET_MOTOR_SPEED, 255, True)
 
     def stop(self, dispenser):
         if self.software_only: return True
@@ -372,9 +384,9 @@ class RouterDriver(object):
         if self.software_only: return True
         return True
 
-    def dispense_ticks(self, dispenser, ticks):
+    def dispense_ticks(self, dispenser, ticks, speed=255):
         if self.software_only: return True
-        return self.send_packet32(dispenser, PACKET_TICK_DISPENSE, ticks)
+        return self.send_packet16(dispenser, PACKET_TICK_SPEED_DISPENSE, ticks, speed)
 
     def led_off(self):
         if self.software_only: return True
@@ -422,9 +434,9 @@ class RouterDriver(object):
         if self.software_only: return False
         while True:
             if self.send_packet8(dispenser, PACKET_IS_DISPENSING, 0):
-                ack, value = self.receive_packet8()
+                ack, value0, value1 = self.receive_packet8_2()
                 if ack == PACKET_ACK_OK:
-                    return value
+                    return (value0, value1)
 
     def update_liquid_levels(self):
         if self.software_only: return True
@@ -467,6 +479,18 @@ class RouterDriver(object):
         if self.software_only: return True
         self.send_packet8(DEST_BROADCAST, PACKET_FLUSH_SAVED_TICK_COUNT, 0)
 
+    def pattern_define(self, dispenser, pattern):
+        if self.software_only: return True
+        self.send_packet8(dispenser, PACKET_PATTERN_DEFINE, pattern)
+
+    def pattern_add_segment(self, dispenser, red, green, blue, steps):
+        if self.software_only: return True
+        self.send_packet8(dispenser, PACKET_PATTERN_ADD_SEGMENT, red, green, blue, steps)
+
+    def pattern_finish(self, dispenser):
+        if self.software_only: return True
+        self.send_packet8(dispenser, PACKET_PATTERN_FINISH, 0)
+
 def ping_test(md):
     while True:
         disp = 0
@@ -497,33 +521,3 @@ def comm_test(md):
     while not md.comm_test():
         sleep(1)
 
-if __name__ == "__main__":
-    md = RouterDriver("/dev/ttyAMA0", 0)
-    md.open()
-
-#    sleep(3)
-#    print "Ping:"
-#    while not md.ping(0):
-#        pass
-
-#    comm_test(md)
-#    val = md.is_dispensing(0)
-#    print "is dispensing: %d\n" % val
-
-#    sleep(2)
-
-#    print "Ping:"
-#    md.ping(0)
-#    print
-
-#    val = md.get_liquid_level(1)
-#    print "liquid level: %d\n" % val
-#    val = md.is_dispensing(0)
-#    print "is dispensing: %d\n" % val
-
-#    sleep(2)
-
-#    md.ping(0);
-
-#    led_test(md)
-#    dispense_test()

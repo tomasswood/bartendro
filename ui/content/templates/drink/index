@@ -202,7 +202,6 @@ function update_volumes()
         total_price += (ing[i].price * ing[i].volume.toFixed(0)/10);
     } 
     $("#size-text").text(drink_size + " " + unit_name);
-    drink_price = (drink_size * 3);
     $("#booze_price").text("Price: $" + (total_price/100).toFixed(2));
 
 }
@@ -318,8 +317,10 @@ function make_drink(drink, is_taster)
 function make_drink(drink, is_taster)
 {
 		var credits = {{ user.credit }};
-		if (credits > drink_price)
+		var userID = {{ user.id }};
+		if (credits >= Math.ceil(total_price))
 		{
+			var remainder = credits - Math.ceil(total_price);
 			for(i = 0; i < ing.length; i++)
 			{
 				if (i == 0)
@@ -340,30 +341,32 @@ function make_drink(drink, is_taster)
 			lb += "</div>";
 			$.modal(lb, { 'escClose' : false });
 			$.ajax({
-					url: "/ws/drink/" + drink + {{ user.id }} + drink_price + args,
+					url: "/ws/drink/" + drink + "/" + userID + "/" + remainder + args,
 					success: function(html)
 					{
 						if (is_taster)
-							$.modal.close();
-						else
-							window.location = "/";
+                        $.modal.close();
+                    else
+                        window.location = "/";
 					}
 			});
-
+			var timeout = window.setTimeout(function() {
+			window.location = "/";
+			}, 5000);
+			
 		} 
 		else 
 		{	
 			var remainder = total_price - credits;
 			lb = '<div class="lb-box"><h1>You dont have enough. You require an extra:</h1><div class="lb-drink">$' + (remainder/100).toFixed(2) + '</div>';
 			$.modal(lb, { 'escClose' : false });
-			
+			var timeout = window.setTimeout(function() {
+			$.modal.close();
+			}, 5000);
 		}
 }
 {% endif %}
-setInterval(function()
-{
-   $.modal.close();
-}, 5000);
+
 </script>
 <script type="text/javascript" src="/static/js/jquery.simplemodal.1.4.2.min.js"></script>
 {% endblock %}

@@ -10,9 +10,13 @@ from bartendro.model.users import Users
 from bartendro.form.booze import BoozeForm
 from bartendro import constant
 
-@app.route('/ws/drink/<int:drink><int:user><int:drink_price>')
+@app.route('/ws/drink/<int:drink>/<int:user>/<int:drink_price>')
 def ws_drink(drink,user,drink_price):
-    admin_users_creditupdate(user,drink_price)
+
+    db.session.query(Users).filter(Users.id==user).update({'credit' : drink_price})
+    db.session.flush()
+    db.session.commit()
+
     mixer = app.mixer
 
     if app.options.must_login_to_dispense and not current_user.is_authenticated():
@@ -26,13 +30,6 @@ def ws_drink(drink,user,drink_price):
         return "ok\n"
     else:
         raise ServiceUnavailable("Error: %s (%d)" % (mixer.get_error(), ret))
-
-def admin_users_creditupdate(id,drink_price):
-    id = 1
-    drink_price = 555
-    user = Users.query.filter_by(id=int(id)).first()
-    user.credit = drink_price
-    db.session.commit()
 
 @app.route('/ws/drink/<int:drink>/available/<int:state>')
 def ws_drink_available(drink, state):

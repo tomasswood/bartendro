@@ -322,20 +322,24 @@ function make_drink(drink, is_taster)
 		{
 			var remainder = credits - Math.ceil(total_price);
 			for(i = 0; i < ing.length; i++)
-			{
-				if (i == 0)
-					args = "?";
-				else 
-					args += "&";
-				args += "booze" + ing[i].id + "=";
-				args += is_taster ? ing[i].taster_volume.toFixed(0) : ing[i].volume.toFixed(0);
-			}
-			lb = '<div class="lb-box"><h1>';
-			if (is_taster)
-				lb += 'Now serving a taste of'
-			else
-				lb += 'Now serving your'
-			lb += '</h1><div class="lb-drink">{{ drink.name.name }}</div>';
+	        {
+	            if (i == 0)
+	                args = "?";
+	            else 
+	                args += "&";
+	            args += "booze" + ing[i].id + "=";
+	            volume = is_taster ? ing[i].taster_volume.toFixed(0) : ing[i].volume.toFixed(0);
+	            {% if not options.metric %}
+	                volume *= 30;
+	            {% endif %}
+	            args += volume;
+	        }
+	        lb = '<div class="lb-box"><h1>';
+	        if (is_taster)
+	            lb += 'Now serving a taste of'
+	        else
+	            lb += 'Now serving your'
+	        lb += '</h1><div class="lb-drink">{{ drink.name.name }}</div>';
 			lb += "</br></br>";
 			lb += '<h1>Total: $' + (total_price/100).toFixed(2) + '</h1>';
 			lb += "</div>";

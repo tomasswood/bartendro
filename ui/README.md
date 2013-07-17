@@ -1,4 +1,4 @@
-The Bartendro UI requires the following pieces of software to be installed:
+Hello; The Bartendro UI requires the following pieces of software to be installed:
 
 werkzeug - http://werkzeug.pocoo.org/docs/
 jinja2 - http://jinja.pocoo.org/docs/

@@ -9,6 +9,8 @@ from bartendro.router import driver
 from bartendro import mixer
 from bartendro.errors import SerialIOError, I2CIOError
 
+"""Hello World!"""
+
 def print_software_only_notice():
     print """If you're trying to run this code without having Bartendro hardware,
 you can still run the software portion of it in a simulation mode. In this mode no 

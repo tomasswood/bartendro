@@ -348,8 +348,19 @@ function make_drink(drink, is_taster)
                         $.modal.close();
                     else
                         window.location = "/";
-					}
-			});
+	                },
+	                error: function(xmlhttp, textStatus)
+	                {
+	                    $.modal.close();
+	                    lb = '<div class="lb-box">';
+	                    if (xmlhttp.status == 503)
+	                        lb += '<h1>Bartendro is Busy!</h1><div class="lb-error">Please wait a moment for Bartendro to become free!'
+	                    else
+	                        lb += '<h1>Bartendro Error:</h1><div class="lb-error">' + xmlhttp.status;
+	                    lb += '</div></div>';
+	                    $.modal(lb);
+	                }
+	        });
 			var timeout = window.setTimeout(function() {
 			window.location = "/";
 			}, 5000);

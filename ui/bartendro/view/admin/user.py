@@ -60,7 +60,7 @@ def login():
                 login_user(User(username))
                 return redirect(request.args.get("next") or url_for("index"))
         flash("Invalid login.")
-    return render_template("/admin/login", form=form)
+    return render_template("/admin/login", options=app.options, form=form)
 
 @app.route("/admin/logout")
 @login_required

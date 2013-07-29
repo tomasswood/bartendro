@@ -26,6 +26,9 @@ DISPENSER_WARNING = 2
 CLEAN_CYCLE_MAX_PUMPS = 5   # The maximum number of pups to run at any one time
 CLEAN_CYCLE_DURATION  = 30  # in seconds for each pump
 
+class BartendroBusyError(Exception):
+    pass
+
 class Mixer(object):
     '''This is where the magic happens!'''
 
@@ -44,6 +47,12 @@ class Mixer(object):
         self.disp_count = self.driver.count()
         self.state = Mixer.MixerState.INIT
         self.check_liquid_levels()
+
+    def lock_bartendro(self):
+        return app.lock.lock_bartendro()
+
+    def unlock_bartendro(self):
+        return app.lock.unlock_bartendro()
 
     def get_error(self):
         return self.err
@@ -70,7 +79,7 @@ class Mixer(object):
         return ok
 
     def check_liquid_levels(self):
-        if not app.options.use_liquid_out_sensors: 
+        if not app.options.use_liquid_level_sensors: 
             self.driver.set_status_color(0, 1, 0)
             state = Mixer.MixerState.READY
             return
@@ -117,7 +126,7 @@ class Mixer(object):
         return new_state
 
     def liquid_level_test(self, dispenser, threshold):
-        if not app.options.use_liquid_out_sensors: return
+        if not app.options.use_liquid_level_sensors: return
 
         print "Start liquid level test: (disp %s thres: %d)" % (dispenser, threshold)
 
@@ -159,7 +168,7 @@ class Mixer(object):
                                                          FROM booze_group_booze bgb, dispenser 
                                                         WHERE bgb.booze_id = dispenser.booze_id)""")
 
-        if app.options.use_liquid_out_sensors: 
+        if app.options.use_liquid_level_sensors: 
             sql = "SELECT booze_id FROM dispenser WHERE out == 0 ORDER BY id LIMIT :d"
         else:
             sql = "SELECT booze_id FROM dispenser ORDER BY id LIMIT :d"
@@ -194,6 +203,32 @@ class Mixer(object):
         self.mc.set("available_drink_list", can_make)
         return can_make
 
+    def wait_til_finished_dispensing(self, disp):
+        """Check to see if the given dispenser is still dispensing. Returns True when finished. False if over current"""
+        timeout_count = 0
+        while True:
+            (is_dispensing, over_current) = app.driver.is_dispensing(disp)
+            #print "%d, %d" % (is_dispensing, over_current)
+            if over_current: return False
+            if is_dispensing == 0: return True
+
+            # This timeout count is here to counteract Issue #64 -- this can be removed once #64 is fixed
+            if is_dispensing == -1:
+                timeout_count += 1
+                if timeout_count == 3:
+                    break
+
+            sleep(.1)
+
+    def test_dispense(self, disp):
+        locked = self.lock_bartendro()
+        if not locked: raise BartendroBusyError
+
+        self.driver.dispense_ticks(disp, app.options.test_dispense_ml * TICKS_PER_ML)
+        self.wait_til_finished_dispensing(disp)
+
+        self.unlock_bartendro()
+
     def make_drink(self, id, recipe_arg):
 
         drink = Drink.query.filter_by(id=int(id)).first()
@@ -220,6 +255,9 @@ class Mixer(object):
                 return False
             recipe.append(r)
         
+        locked = self.lock_bartendro()
+        if not locked: raise BartendroBusyError
+    
         app.log.info("Making drink: '%s' size %.2f ml" % (drink.name.name, size))
         self.led_dispense()
         dur = 0
@@ -237,20 +275,9 @@ class Mixer(object):
             if r['ms'] > dur: dur = r['ms']
 
         current_sense = False
-        while True:
-            sleep(.1)
-            done = True
-            for disp in active_disp:
-                is_disp, is_cs = self.driver.is_dispensing(disp - 1)
-                if is_cs:
-                    done = True
-                    current_sense = True
-                    break
-
-                if is_disp: 
-                    done = False
-                    break
-            if done: break
+        for disp in active_disp:
+            if not self.wait_til_finished_dispensing(disp-1):
+                current_sense = True
 
         if current_sense: 
             print "Current sense detected!"
@@ -263,11 +290,14 @@ class Mixer(object):
         db.session.add(dlog)
         db.session.commit()
 
-        if app.options.use_liquid_out_sensors and not self.check_liquid_levels():
+        if app.options.use_liquid_level_sensors and not self.check_liquid_levels():
+            self.unlock_bartendro()
             self.leds_panic()
             return False
 
         FlashGreenLeds(self).start()
+        self.unlock_bartendro()
+
         return True 
 
     def clean(self):

@@ -10,7 +10,7 @@ from bartendro.form.users import UsersForm
 def admin_users():
     form = UsersForm(request.form)
     users = Users.query.order_by(Users.id)
-    return render_template("admin/users", users=users, form=form, title="Users")
+    return render_template("admin/users", options=app.options, users=users, form=form, title="Users")
 
 @app.route('/admin/users/edit/<id>')
 @login_required
@@ -19,7 +19,7 @@ def admin_users_edit(id):
     user = Users.query.filter_by(id=int(id)).first()
     form = UsersForm(obj=user)
     users = Users.query.order_by(Users.id)
-    return render_template("admin/users", user=user, users=users, form=form, title="Users", saved=saved)
+    return render_template("admin/users", options=app.options, user=user, users=users, form=form, title="Users", saved=saved)
 
 @app.route('/admin/users/save', methods=['POST'])
 @login_required
@@ -42,4 +42,4 @@ def admin_users_save():
         return redirect('/admin/users/edit/%d?saved=1' % user.id)
 
     users = Users.query.order_by(Users.id)
-    return render_template("admin/users", users=users, form=form, title="")
+    return render_template("admin/users", options=app.options, users=users, form=form, title="")

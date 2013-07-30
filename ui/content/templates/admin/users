@@ -1,6 +1,6 @@
 {% extends 'admin/layout' %}
 {% block body %}
-{% if current_user.is_administrator() %}
+{% if current_user.is_superadministrator() %}
 <div class="row-fluid">
     <div class="span6">
        <h2>{{ title }}</h2>
@@ -24,6 +24,10 @@
              <div>{{ form.administrator.label }}:<br/> {{ form.administrator(class="form-element") }}</div>
              {% if form.administrator.errors %}
                  <ul class="errors">{% for error in form.administrator.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+             {% endif %}
+             <div>{{ form.superadministrator.label }}:<br/> {{ form.superadministrator(class="form-element") }}</div>
+             {% if form.superadministrator.errors %}
+                 <ul class="errors">{% for error in form.superadministrator.errors %}<li>{{ error }}</li>{% endfor %}</ul>
              {% endif %}
              {{ form.id() }}
              <div style="padding-top: 10px;">

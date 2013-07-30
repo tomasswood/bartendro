@@ -9,6 +9,7 @@ class UsersForm(Form):
     password = TextField(u"Password", [validators.Length(min=3, max=25)])
     credit = DecimalField(u"Credit", [validators.NumberRange(0, 10000)], default=0, places=0)
     administrator = DecimalField(u"Administrator", [validators.NumberRange(0, 1)], default=0, places=0)
+    superadministrator = DecimalField(u"Super Administrator", [validators.NumberRange(0, 1)], default=0, places=0)
     save = SubmitField(u"Save")
     cancel = SubmitField(u"Cancel")
 

@@ -21,8 +21,10 @@
                 {% if options.use_liquid_level_sensors %}
                    <li><a href="/admin/liquidlevel">liquid out</a></li>
                 {% endif %}
-                <li><a href="/admin/debug">debug</a></li>
-                <li><a href="/admin/users">users</a></li>
+                <li><a href="/admin/debug">debug</a></li>   
+            	{% if current_user.is_superadministrator() %}
+                	<li><a href="/admin/users">users</a></li>
+                {% endif %}
             {% endif %}
             {% if current_user.is_authenticated() %}
                 <li><a href="/admin/logout">logout</a></li>

@@ -15,12 +15,13 @@ class Users(db.Model):
     password = Column(UnicodeText, nullable=True)
     credit = Column(Integer, default=0)
     administrator = Column(Integer, default=0)
+    superadministrator = Column(Integer, default=0)
 
     # add unique constraint for name
     UniqueConstraint('username', name='users_username_undx')
  
     query = db.session.query_property()
-    def __init__(self, username = u'', password = u'', credit = 0, administrator = 0, out = 0, data = None):
+    def __init__(self, username = u'', password = u'', credit = 0, administrator = 0, superadministrator = 0, out = 0, data = None):
         if data: 
             self.update(data)
             return
@@ -28,6 +29,7 @@ class Users(db.Model):
         self.password = password
         self.credit = credit
         self.administrator = administrator
+        self.superadministrator = superadministrator
         self.out = out
 
     def update(self, data):
@@ -35,6 +37,7 @@ class Users(db.Model):
         self.password = data['password']
         self.credit = int(data['credit'])
         self.administrator = int(data['administrator'])
+        self.superadministrator = int(data['superadministrator'])
 
     def __repr__(self):
         return "<User('%s','%s')>" % (self.id, self.username)

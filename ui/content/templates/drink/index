@@ -345,7 +345,7 @@ function make_drink(drink, is_taster)
 					success: function(html)
 					{
 						if (is_taster)
-                        $.modal.close();
+                        	$.modal.close();
                     else
                         window.location = "/";
 	                },

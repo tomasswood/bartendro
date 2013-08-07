@@ -5,17 +5,34 @@ import logging
 import os
 import memcache
 import sys
-import uwsgi
 from bartendro.router import driver
 from bartendro import mixer
 from bartendro.errors import SerialIOError, I2CIOError
+import argparse
 
+parser = argparse.ArgumentParser(description='Bartendro application process')
+parser.add_argument("-d", "--debug", help="Turn on debugging mode to see stack traces in the error log", default=True, action='store_true')
+parser.add_argument("-t", "--host", help="Which interfaces to listen on. Default: 127.0.0.1", default="127.0.0.1", type=str)
+parser.add_argument("-p", "--port", help="Which port to listen on. Default: 8080", default="8080", type=int)
+
+args = parser.parse_args()
+if args.debug: print " * Debugging has been enabled."
+
+try:
+    import uwsgi
+    have_uwsgi = True
+except ImportError:
+    have_uwsgi = False
+    
 class BartendroLock(object):
 
     def lock_bartendro(self):
         """Call this function before making a drink or doing anything that where two users' action may conflict.
            This function will return True if the lock was granted, of False is someone else has already locked 
            Bartendro."""
+
+        # If we're not running inside uwsgi, then don't try to use the lock
+        if not have_uwsgi: return True
 
         uwsgi.lock()
         is_locked = uwsgi.sharedarea_readbyte(0)
@@ -29,6 +46,9 @@ class BartendroLock(object):
 
     def unlock_bartendro(self):
         """Call this function when you've previously locked bartendro and now you want to unlock it."""
+
+        # If we're not running inside uwsgi, then don't try to use the lock
+        if not have_uwsgi: return True
 
         uwsgi.lock()
         is_locked = uwsgi.sharedarea_readbyte(0)
@@ -60,6 +80,7 @@ except ImportError:
     sys.exit(-1)
 app.options = config
 
+<<<<<<< HEAD
 if len(sys.argv) > 1 and sys.argv[1] == "--debug":
     debug = True
 else:
@@ -67,6 +88,8 @@ else:
 
 # For now, leave debug on
 debug = True
+=======
+>>>>>>> 09f64df126f20b17f84ac63cbf12689e3080eb0e
 
 try: 
     app.software_only = 1 #int(os.environ['BARTENDRO_SOFTWARE_ONLY'])
@@ -110,8 +133,11 @@ if app.software_only:
     app.log.info("Running SOFTWARE ONLY VERSION. No communication between software and hardware chain will happen!")
 
 app.log.info("Bartendro starting")
-
-app.debug = debug
+app.debug = args.debug
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     app.run(host='127.0.0.1', port=8091)
+=======
+    app.run(host=args.host, port=args.port)
+>>>>>>> 09f64df126f20b17f84ac63cbf12689e3080eb0e

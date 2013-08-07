@@ -3,7 +3,7 @@ from time import sleep
 from bartendro import app, db, mixer
 from flask import Flask, request
 from flask.ext.login import login_required, current_user
-from werkzeug.exceptions import ServiceUnavailable
+from werkzeug.exceptions import ServiceUnavailable, BadRequest
 from bartendro.model.drink import Drink
 from bartendro.model.booze import Booze
 from bartendro.model.users import Users
@@ -26,10 +26,11 @@ def ws_drink(drink,user,drink_price):
         recipe[arg] = int(request.args.get(arg))
         admin_users_creditupdate()
     try:
-        if drink_mixer.make_drink(drink, recipe):
+        err = drink_mixer.make_drink(drink, recipe)
+        if not err:
             return "ok\n"
         else:
-            raise InternalServerError("failed to make drink")
+            raise BadRequest(err)
     except mixer.BartendroBusyError:
         raise ServiceUnavailable("busy")
 

@@ -10,6 +10,7 @@ class User(object):
     credit = 0
     username = ""
     administrator = False
+    superadministrator = False
 
     def __init__(self, username):
         self.username = username
@@ -30,6 +31,14 @@ class User(object):
         else:
             self.administrator = False
         return self.administrator
+
+    def is_superadministrator(self):
+        dbSuperAdmin = db.session.query(Users).filter(Users.username == self.username).first()
+        if (dbSuperAdmin.superadministrator == 1):
+            self.superadministrator = True
+        else:
+            self.superadministrator = False
+        return self.superadministrator
 
     def get_id(self):
         return self.username

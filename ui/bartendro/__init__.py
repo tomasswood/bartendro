@@ -63,9 +63,5 @@ from bartendro.view import root, trending
 from bartendro.view.admin import booze as booze_admin, drink as drink_admin, \
 dispenser as admin_dispenser, report, liquidlevel, user, users, options, debug
 from bartendro.view.drink import drink
-from bartendro.view.ws import booze as ws_booze, dispenser as ws_dispenser, drink as ws_drink, \
-<<<<<<< HEAD
-                              misc as ws_misc, shotbot as ws_shotbot, users as ws_users
-=======
+from bartendro.view.ws import booze as ws_booze, dispenser as ws_dispenser, users as ws_users, drink as ws_drink, \
                               misc as ws_misc, shotbot as ws_shotbot, liquidlevel
->>>>>>> 09f64df126f20b17f84ac63cbf12689e3080eb0e

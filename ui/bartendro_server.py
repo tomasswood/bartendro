@@ -88,26 +88,10 @@ logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 logger = logging.getLogger('bartendro')
 logger.addHandler(handler)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-if len(sys.argv) > 1 and sys.argv[1] == "--debug":
-    debug = True
-else:
-    debug = False
-
-# For now, leave debug on
-debug = True
-=======
->>>>>>> 09f64df126f20b17f84ac63cbf12689e3080eb0e
-
-try: 
-    app.software_only = 1 #int(os.environ['BARTENDRO_SOFTWARE_ONLY'])
-=======
 app.options = load_options()
 
-try: 
-    app.software_only = args.software_only or int(os.environ['BARTENDRO_SOFTWARE_ONLY'])
->>>>>>> 85a4c25be92959d891cd3b0b7c21918d6b8a0ca3
+try:
+    app.software_only = 1#args.software_only or int(os.environ['BARTENDRO_SOFTWARE_ONLY'])
     app.num_dispensers = 15
 except KeyError:
     app.software_only = 0
@@ -151,8 +135,4 @@ logging.info("Bartendro starting")
 app.debug = args.debug
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    app.run(host='127.0.0.1', port=8091)
-=======
     app.run(host=args.host, port=args.port)
->>>>>>> 09f64df126f20b17f84ac63cbf12689e3080eb0e

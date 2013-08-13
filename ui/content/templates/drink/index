@@ -348,61 +348,37 @@ function make_drink(drink, is_taster)
                         	$.modal.close();
                     else
                         window.location = "/";
-<<<<<<< HEAD
 	                },
-	                error: function(xmlhttp, textStatus)
+	                error: function(xmlhttp, textStatus, error)
 	                {
 	                    $.modal.close();
 	                    lb = '<div class="lb-box">';
 	                    if (xmlhttp.status == 503)
-	                        lb += '<h1>Bartendro is Busy!</h1><div class="lb-error">Please wait a moment for Bartendro to become free!'
+	                        lb += '<h1>Bartendro is Busy!</h1><div class="lb-error">Please wait a moment for Bartendro to become free!';
 	                    else
-	                        lb += '<h1>Bartendro Error:</h1><div class="lb-error">' + xmlhttp.status;
+	                    if (xmlhttp.status == 400)
+	                        lb += '<h1>Whoops</h1><div class="lb-error">Sorry, I can\'t make<br/> this drink right now.';
+	                    else
+	                        lb += '<h1>Bartendro Error:</h1><div class="lb-error">' + textStatus;
+	                    lb += '</div><br/><a class="btn btn-large" onclick="close_modal()">OK</a></div>';
 	                    lb += '</div></div>';
 	                    $.modal(lb);
 	                }
 	        });
-			var timeout = window.setTimeout(function() {
-			window.location = "/";
-			}, 5000);
 			
 		} 
 		else 
 		{	
 			var remainder = total_price - credits;
 			lb = '<div class="lb-box"><h1>You dont have enough. You require an extra:</h1><div class="lb-drink">$' + (remainder/100).toFixed(2) + '</div>';
-			$.modal(lb, { 'escClose' : false });
-			var timeout = window.setTimeout(function() {
-			$.modal.close();
-			}, 5000);
+			lb += '<div><br /><a class="btn btn-large" onclick="close_modal()">OK</a></div>';
+			$.modal(lb);
 		}
-}
-{% endif %}
-
-=======
-                },
-                error: function(xmlhttp, textStatus, error)
-                {
-                    $.modal.close();
-                    lb = '<div class="lb-box">';
-                    if (xmlhttp.status == 503)
-                        lb += '<h1>Bartendro is Busy!</h1><div class="lb-error">Please wait a moment for Bartendro to become free!';
-                    else
-                    if (xmlhttp.status == 400)
-                        lb += '<h1>Whoops</h1><div class="lb-error">Sorry, I can\'t make<br/> this drink right now.';
-                    else
-                        lb += '<h1>Bartendro Error:</h1><div class="lb-error">' + textStatus;
-                    lb += '</div><br/><a class="btn btn-large" onclick="close_modal()">OK</a></div>';
-                    lb += '</div></div>';
-                    $.modal(lb);
-                }
-        });
 }
 {% endif %}
 function close_modal() {
     $.modal.close();
 }
->>>>>>> 09f64df126f20b17f84ac63cbf12689e3080eb0e
 </script>
 <script type="text/javascript" src="/static/js/jquery.simplemodal.1.4.4.min.js"></script>
 {% endblock %}

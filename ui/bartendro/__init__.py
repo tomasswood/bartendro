@@ -39,6 +39,7 @@ from bartendro.model.dispenser import Dispenser
 from bartendro.model.drink_log import DrinkLog
 from bartendro.model.users import Users
 from bartendro.model.version import DatabaseVersion
+from bartendro.model.option import Option
 
 Drink.name = relationship(DrinkName, backref=backref("drink"))
 

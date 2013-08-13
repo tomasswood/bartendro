@@ -108,7 +108,7 @@
       </div>
   </div>
 </div>
-<script type="text/javascript" src="/static/js/jquery.js"></script>
+<script type="text/javascript" src="/static/js/jquery-1.10.2.min.js"></script>
 <script type="text/javascript">
 
 var taster_size = 30;
@@ -404,5 +404,5 @@ function close_modal() {
 }
 >>>>>>> 09f64df126f20b17f84ac63cbf12689e3080eb0e
 </script>
-<script type="text/javascript" src="/static/js/jquery.simplemodal.1.4.2.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery.simplemodal.1.4.4.min.js"></script>
 {% endblock %}

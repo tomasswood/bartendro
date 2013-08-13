@@ -9,6 +9,7 @@ import sys
 from bartendro.router import driver
 from bartendro import mixer
 from bartendro.errors import SerialIOError, I2CIOError
+from bartendro.options import load_options
 import argparse
 
 LOG_SIZE = 1024 * 500  # 500k maximum log file size
@@ -19,9 +20,9 @@ parser = argparse.ArgumentParser(description='Bartendro application process')
 parser.add_argument("-d", "--debug", help="Turn on debugging mode to see stack traces in the error log", default=True, action='store_true')
 parser.add_argument("-t", "--host", help="Which interfaces to listen on. Default: 127.0.0.1", default="127.0.0.1", type=str)
 parser.add_argument("-p", "--port", help="Which port to listen on. Default: 8080", default="8080", type=int)
+parser.add_argument("-s", "--software-only", help="Run only the server software, without hardware interaction.", default=False, action='store_true')
 
 args = parser.parse_args()
-if args.debug: print " * Debugging has been enabled."
 
 try:
     import uwsgi
@@ -76,15 +77,18 @@ try again:
 
 """
 
-try:
-    import config
-except ImportError:
-    print "You need to create a configuration file called config.py by copying"
-    print "config.py.default to config.py . Edit the configuration options in that"
-    print "file to tune bartendro to your needs, then start the server again."
-    sys.exit(-1)
-app.options = config
+# Set up logging
+if not os.path.exists("logs"):
+    os.mkdir("logs")
 
+handler = logging.handlers.RotatingFileHandler(os.path.join("logs", "bartendro.log"), 
+                                               maxBytes=LOG_SIZE, 
+                                               backupCount=LOG_FILES_SAVED)
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+logger = logging.getLogger('bartendro')
+logger.addHandler(handler)
+
+<<<<<<< HEAD
 <<<<<<< HEAD
 if len(sys.argv) > 1 and sys.argv[1] == "--debug":
     debug = True
@@ -98,6 +102,12 @@ debug = True
 
 try: 
     app.software_only = 1 #int(os.environ['BARTENDRO_SOFTWARE_ONLY'])
+=======
+app.options = load_options()
+
+try: 
+    app.software_only = args.software_only or int(os.environ['BARTENDRO_SOFTWARE_ONLY'])
+>>>>>>> 85a4c25be92959d891cd3b0b7c21918d6b8a0ca3
     app.num_dispensers = 15
 except KeyError:
     app.software_only = 0
@@ -113,17 +123,6 @@ app.mc.flush_all()
 
 # Create the Bartendro lock to prevent multiple people from using it at the same time.
 app.lock = BartendroLock()
-
-# Set up logging
-if not os.path.exists("logs"):
-    os.mkdir("logs")
-
-handler = logging.handlers.RotatingFileHandler(os.path.join("logs", "bartendro.log"), 
-                                               maxBytes=LOG_SIZE, 
-                                               backupCount=LOG_FILES_SAVED)
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
-logger = logging.getLogger('bartendro')
-logger.addHandler(handler)
 
 # Start the driver, which talks to the hardware
 try:

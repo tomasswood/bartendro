@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from sqlalchemy import func, asc
 import memcache
 from bartendro import app, db
 from flask import Flask, request, redirect, render_template
@@ -24,8 +25,9 @@ def dispenser():
 
     dispensers = db.session.query(Dispenser).order_by(Dispenser.id).all()
     boozes = db.session.query(Booze).order_by(Booze.id).all()
-    booze_list = [(b.id, b.name) for b in boozes] 
+    booze_list = [(b.id, b.name) for b in boozes]
     sorted_booze_list = sorted(booze_list, key=itemgetter(1))
+
     if app.options.use_liquid_level_sensors:
         states = [dispenser.out for dispenser in dispensers]
     else:
@@ -33,7 +35,6 @@ def dispenser():
 
     kwargs = {}
     fields = []
-    # TODO: Use the actual field for liquid out sensor calibration later
     for i in xrange(1, 17):
         dis = "dispenser%d" % i
         actual = "actual%d" % i

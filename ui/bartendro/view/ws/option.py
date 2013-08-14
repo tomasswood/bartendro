@@ -1,26 +1,54 @@
 # -*- coding: utf-8 -*-
 import json
-from operator import itemgetter
+from sqlalchemy import asc, func
 from bartendro import app, db, mixer
 from flask import Flask, request
-from flask.ext.login import login_required
-from werkzeug.exceptions import ServiceUnavailable, BadRequest
+from flask.ext.login import login_required, logout_user
+from werkzeug.exceptions import InternalServerError, BadRequest
 from bartendro.model.option import Option
+from bartendro.options import bartendro_options
 
-@app.route('/ws/option/save', methods=["POST"])
-def ws_option_save(drink):
-    data = request.json['options']
+@app.route('/ws/options', methods=["POST", "GET"])
+@login_required
+def ws_options():
+    if request.method == 'GET':
+        options = Option.query.order_by(asc(func.lower(Option.key)))
+        data = {}
+        for o in options:
+            if isinstance(bartendro_options[o.key], int):
+               value = int(o.value)
+            elif isinstance(bartendro_options[o.key], unicode):
+               value = unicode(o.value)
+            elif isinstance(bartendro_options[o.key], boolean):
+               value = boolean(o.value)
+            else:
+                raise InternalServerError
+            data[o.key] = value
 
-    # TODO: Lookup how to remove all the options in the DB
-    Option.query.remove.all()
+        return json.dumps({ 'options' : data });
 
-    # json: { options : [(key, value), (..), ..] }
-    for key, value in data:
-        option = Option(key, value)
-        db.session.add(option)
+    if request.method == 'POST':
+        try:
+            data = request.json['options']
+            logout = request.json['logout']
+        except KeyError:
+            raise BadRequest
 
-    db.session.commit()
+        if logout: logout_user()
 
-    # TODO: figure out how to restart Bartendro
+        Option.query.delete()
 
-    return json.dumps({});
+        for key in data:
+            option = Option(key, data[key])
+            db.session.add(option)
+
+        db.session.commit()
+        try:
+            import uwsgi
+            uwsgi.reload()
+            reload = True
+        except ImportError:
+            reload = False
+        return json.dumps({ 'reload' : reload });
+
+    raise BadRequest
